@@ -560,7 +560,13 @@ function Library:CreateWindow(config)
             for _, item in pairs(Page:GetChildren()) do
                 if item:IsA("Frame") then
                     item.BackgroundTransparency = 1
-                    Tween(item, Easings.Default, {BackgroundTransparency = 0})
+                    
+                    local targetTransparency = 0
+                    if item.Name == "Section" then
+                        targetTransparency = 1 -- Keep invisible for sections
+                    end
+                    
+                    Tween(item, Easings.Default, {BackgroundTransparency = targetTransparency})
                 end
             end
         end
