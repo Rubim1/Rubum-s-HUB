@@ -439,12 +439,20 @@ function Library:CreateWindow(config)
             Main.Visible = true
             Tween(Main, Easings.Spring, {Size = Size})
             Tween(Main, Easings.Fast, {BackgroundTransparency = 0})
-            for _, child in pairs(Main:GetChildren()) do
-                if child:IsA("Frame") or child:IsA("ImageButton") then
-                    Tween(child, Easings.Fast, {BackgroundTransparency = child.Name == "Shadow" and 1 or 0}) -- Shadow handled separately? 
-                    -- Simplification: Just toggle Visible for clean hide
-                end
-            end
+            
+            -- Explicitly handle children transparency
+            local Sidebar = Main:FindFirstChild("Sidebar")
+            if Sidebar then Tween(Sidebar, Easings.Fast, {BackgroundTransparency = 0}) end
+            
+            local Divider = Main:FindFirstChild("Divider")
+            if Divider then Tween(Divider, Easings.Fast, {BackgroundTransparency = 0}) end
+            
+            -- Keep these transparent
+            local ContentContainer = Main:FindFirstChild("ContentContainer")
+            if ContentContainer then Tween(ContentContainer, Easings.Fast, {BackgroundTransparency = 1}) end
+            
+            local CloseBtn = Main:FindFirstChild("Close")
+            if CloseBtn then Tween(CloseBtn, Easings.Fast, {BackgroundTransparency = 1}) end
         else
             Tween(Main, Easings.Smooth, {Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1})
             wait(0.2)
@@ -461,7 +469,7 @@ function Library:CreateWindow(config)
     
     -- Close Button Logic Update
     CloseBtn.MouseButton1Click:Connect(function()
-       Library:ToggleUI() -- Just hide instead of destroy
+       Library:ToggleUI()
     end)
     
     MakeDraggable(Main, Sidebar)
