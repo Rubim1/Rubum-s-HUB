@@ -414,6 +414,7 @@ function Library:CreateWindow(config)
     ContentContainer.Name = "ContentContainer"
     ContentContainer.Size = UDim2.new(1, -TabWidth, 1, 0)
     ContentContainer.Position = UDim2.new(0, TabWidth, 0, 0)
+    ContentContainer.BackgroundColor3 = Library.Theme.Main -- Fix gray glitch color
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.ClipsDescendants = true
     
@@ -523,6 +524,7 @@ function Library:CreateWindow(config)
         local Page = Instance.new("ScrollingFrame", ContentContainer)
         Page.Name = name .. "Page"
         Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundColor3 = Library.Theme.Main -- Fix gray glitch color
         Page.BackgroundTransparency = 1
         Page.Visible = false
         Page.ScrollBarThickness = 2
