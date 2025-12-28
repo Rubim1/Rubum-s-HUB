@@ -154,8 +154,73 @@ local function MakeDraggable(frame, handle)
     end)
 end
 
---// NOTIFICATION TABLE
-Library.Notifications = {}
+--// THEME UPDATE SYSTEM
+function Library:ForceUpdateTheme()
+    -- Repaint specific elements using CollectionService-like logic (by name/type)
+    -- This is a "best effort" repaint for the demo
+    
+    local gui = GetParent():FindFirstChild("AiriNodes")
+    if not gui then return end
+    
+    local Main = gui:FindFirstChild("Container") and gui.Container:FindFirstChild("MainFrame")
+    if Main then
+        Tween(Main, Easings.Fast, {BackgroundColor3 = Library.Theme.Main})
+        Tween(Main.UIStroke, Easings.Fast, {Color = Library.Theme.Stroke})
+        Tween(Main.Shadow.ImageLabel, Easings.Fast, {ImageColor3 = Library.Theme.Accent})
+        
+        local Sidebar = Main:FindFirstChild("Sidebar")
+        if Sidebar then
+            Tween(Sidebar, Easings.Fast, {BackgroundColor3 = Library.Theme.Main, BorderColor3 = Library.Theme.Stroke})
+            local TitleFrame = Sidebar:FindFirstChild("TitleFrame")
+            if TitleFrame then
+                TitleFrame.Title.TextColor3 = Library.Theme.Text
+                -- Gradient update is complex, skip for now or rebuild
+            end
+        end
+        
+        -- Update Tabs
+        if Sidebar then
+           local TabContainer = Sidebar:FindFirstChild("TabContainer")
+           if TabContainer then
+                for _, btn in pairs(TabContainer:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        -- Check if active or not? Assuming inactive for base color, but active has special handling
+                        -- Just simpler to let next click update it, or strictly update Accent
+                        local ind = btn:FindFirstChild("Frame")
+                        if ind then ind.BackgroundColor3 = Library.Theme.Accent end
+                    end
+                end
+           end
+        end
+        
+        -- Update Content Items
+        local ContentContainer = Main:FindFirstChild("ContentContainer")
+        if ContentContainer then
+            for _, page in pairs(ContentContainer:GetChildren()) do
+                if page:IsA("ScrollingFrame") then
+                     page.BackgroundColor3 = Library.Theme.Main
+                     page.ScrollBarImageColor3 = Library.Theme.Accent
+                     for _, item in pairs(page:GetChildren()) do
+                        if item:IsA("Frame") and item.Name ~= "Section" then
+                            -- Regular items
+                            item.BackgroundColor3 = Library.Theme.Secondary
+                            item.UIStroke.Color = Library.Theme.Stroke
+                            -- Update Labels inside
+                            for _, lbl in pairs(item:GetDescendants()) do
+                                if lbl:IsA("TextLabel") then
+                                    if lbl.TextColor3 == Library.Theme.Text then lbl.TextColor3 = Library.Theme.Text end -- Re-apply
+                                    -- This is tricky without previous state references. 
+                                    -- Simplification: Just update Accent colored things
+                                end
+                            end
+                        end
+                     end
+                end
+            end
+        end
+    end
+end
+
 
 --// NOTIFICATION SYSTEM
 function Library:Notify(config)
@@ -443,10 +508,10 @@ function Library:CreateWindow(config)
             
             -- Explicitly handle children transparency
             local Sidebar = Main:FindFirstChild("Sidebar")
-            if Sidebar then Tween(Sidebar, Easings.Fast, {BackgroundTransparency = 0}) end
+            if Sidebar then Tween(Sidebar, Easings.Fast, {BackgroundTransparency = 0, BackgroundColor3 = Library.Theme.Main}) end
             
             local Divider = Main:FindFirstChild("Divider")
-            if Divider then Tween(Divider, Easings.Fast, {BackgroundTransparency = 0}) end
+            if Divider then Tween(Divider, Easings.Fast, {BackgroundTransparency = 0, BackgroundColor3 = Library.Theme.Stroke}) end
             
             -- Keep these transparent
             local ContentContainer = Main:FindFirstChild("ContentContainer")
@@ -542,6 +607,16 @@ function Library:CreateWindow(config)
         local PageLayout = Instance.new("UIListLayout", Page)
         PageLayout.Padding = UDim.new(0, 10)
         PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        -- Manual Canvas Size Calculation (Fix for Executors)
+        PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Page.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 20)
+        end)
+        spawn(function()
+             -- Force initial update
+             wait(0.1)
+             Page.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 20)
+        end)
         
         -- Tab Activation Logic
         local function Activate()
