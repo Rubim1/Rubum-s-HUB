@@ -1037,7 +1037,12 @@ function Library:CreateWindow(config)
                     end)
                 end
                 
-                OptionContainer.CanvasSize = UDim2.new(0, 0, 0, OptionLayout.AbsoluteContentSize.Y + 5)
+                task.spawn(function()
+                    wait() -- Yield to ensure layout updates
+                    if OptionContainer and OptionLayout then
+                         OptionContainer.CanvasSize = UDim2.new(0, 0, 0, OptionLayout.AbsoluteContentSize.Y + 5)
+                    end
+                end)
             end
             
             RefreshOptions()
