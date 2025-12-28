@@ -429,19 +429,47 @@ function Library:CreateWindow(config)
     CloseBtn.ImageColor3 = Library.Theme.TextDim
     CloseBtn.ZIndex = 10
     
+    -- Toggle UI Logic
+    local ToggleKey = config.ToggleKey or Enum.KeyCode.RightControl
+    local IsVisible = true
+    
+    function Library:ToggleUI()
+        IsVisible = not IsVisible
+        if IsVisible then
+            Main.Visible = true
+            Tween(Main, Easings.Spring, {Size = Size})
+            Tween(Main, Easings.Fast, {BackgroundTransparency = 0})
+            for _, child in pairs(Main:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("ImageButton") then
+                    Tween(child, Easings.Fast, {BackgroundTransparency = child.Name == "Shadow" and 1 or 0}) -- Shadow handled separately? 
+                    -- Simplification: Just toggle Visible for clean hide
+                end
+            end
+        else
+            Tween(Main, Easings.Smooth, {Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1})
+            wait(0.2)
+            Main.Visible = false
+        end
+    end
+
+    UserInputService.InputBegan:Connect(function(input, gp)
+        if gp then return end
+        if input.KeyCode == ToggleKey then
+            Library:ToggleUI()
+        end
+    end)
+    
+    -- Close Button Logic Update
     CloseBtn.MouseButton1Click:Connect(function()
-        -- Exit Animation
-        Tween(Main, Easings.Smooth, {Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1})
-        wait(0.3)
-        ScreenGui:Destroy()
-        Blur:Destroy()
+       Library:ToggleUI() -- Just hide instead of destroy
     end)
     
     MakeDraggable(Main, Sidebar)
     
     -- Intro Animation
     task.spawn(function()
-        Main.Size = UDim2.new(0,0,0,0)
+        Main.Visible = true
+        Main.Size = UDim2.new(0, 0, 0, 0)
         Main.BackgroundTransparency = 1
         wait(0.1)
         Tween(Main, Easings.Spring, {Size = Size})
@@ -549,7 +577,9 @@ function Library:CreateWindow(config)
             local SectionFrame = Instance.new("Frame", Page)
             SectionFrame.Name = "Section"
             SectionFrame.Size = UDim2.new(1, 0, 0, 30)
-            SectionFrame.BackgroundTransparency = 1
+            SectionFrame.BackgroundColor3 = Library.Theme.Main -- Match bg just in case
+            SectionFrame.BackgroundTransparency = 1 -- Force transparent
+            SectionFrame.BorderSizePixel = 0
             
             local SectionLabel = Instance.new("TextLabel", SectionFrame)
             SectionLabel.Text = text
@@ -558,6 +588,7 @@ function Library:CreateWindow(config)
             SectionLabel.TextSize = 12
             SectionLabel.Size = UDim2.new(1, 0, 1, 0)
             SectionLabel.BackgroundTransparency = 1
+            SectionLabel.BackgroundColor3 = Library.Theme.Main -- Match bg
             SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
             SectionLabel.TextYAlignment = Enum.TextYAlignment.Bottom
             
