@@ -1045,10 +1045,19 @@ function Library:CreateWindow(config)
                 end)
             end
             
-            RefreshOptions()
+            -- Removed initial RefreshOptions() call to prevent crash
+            -- RefreshOptions() 
+            
+            local firstOpen = true
             
             OptionTrigger.MouseButton1Click:Connect(function()
                 isOpen = not isOpen
+                
+                if isOpen and firstOpen then
+                    RefreshOptions()
+                    firstOpen = false
+                end
+                
                 if isOpen then
                     local listHeight = math.min(#options * 31 + 5, 150)
                     Tween(DropdownFrame, Easings.Default, {Size = UDim2.new(1, 0, 0, 40 + listHeight)})
